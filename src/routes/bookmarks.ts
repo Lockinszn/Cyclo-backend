@@ -2,101 +2,57 @@ import { Router, Request, Response } from 'express';
 
 const router = Router();
 
-// GET /api/v1/bookmarks
+// GET /api/v1/bookmarks - Get user bookmarks
 router.get('/', (req: Request, res: Response) => {
   res.status(501).json({
-    message: 'Get user bookmarks endpoint - To be implemented',
-    endpoint: 'GET /api/v1/bookmarks',
-    queryParams: {
-      collectionId: 'string (optional)',
+    message: 'Get bookmarks endpoint not implemented',
+    query_params: {
       page: 'number (optional)',
-      limit: 'number (optional)'
+      limit: 'number (optional)',
+      sort: 'string (optional) - created_at, title'
     }
   });
 });
 
-// POST /api/v1/bookmarks
+// POST /api/v1/bookmarks - Add bookmark
 router.post('/', (req: Request, res: Response) => {
   res.status(501).json({
-    message: 'Create bookmark endpoint - To be implemented',
-    endpoint: 'POST /api/v1/bookmarks',
-    expectedBody: {
-      postId: 'string',
-      collectionId: 'string (optional)',
+    message: 'Add bookmark endpoint not implemented',
+    expected_body: {
+      post_id: 'string (required)',
       notes: 'string (optional)'
     }
   });
 });
 
-// DELETE /api/v1/bookmarks/:id
+// DELETE /api/v1/bookmarks/:id - Remove bookmark
 router.delete('/:id', (req: Request, res: Response) => {
   res.status(501).json({
-    message: 'Delete bookmark endpoint - To be implemented',
-    endpoint: 'DELETE /api/v1/bookmarks/:id',
-    bookmarkId: req.params.id
+    message: 'Remove bookmark endpoint not implemented',
+    bookmark_id: req.params.id
   });
 });
 
-// PUT /api/v1/bookmarks/:id
+// PUT /api/v1/bookmarks/:id - Update bookmark
 router.put('/:id', (req: Request, res: Response) => {
   res.status(501).json({
-    message: 'Update bookmark endpoint - To be implemented',
-    endpoint: 'PUT /api/v1/bookmarks/:id',
-    bookmarkId: req.params.id,
-    expectedBody: {
-      collectionId: 'string (optional)',
+    message: 'Update bookmark endpoint not implemented',
+    bookmark_id: req.params.id,
+    expected_body: {
       notes: 'string (optional)'
     }
   });
 });
 
-// GET /api/v1/bookmarks/collections
-router.get('/collections', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Get bookmark collections endpoint - To be implemented',
-    endpoint: 'GET /api/v1/bookmarks/collections'
-  });
-});
-
-// POST /api/v1/bookmarks/collections
-router.post('/collections', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Create bookmark collection endpoint - To be implemented',
-    endpoint: 'POST /api/v1/bookmarks/collections',
-    expectedBody: {
-      name: 'string',
-      description: 'string (optional)',
-      isPublic: 'boolean (optional)'
-    }
-  });
-});
-
-// PUT /api/v1/bookmarks/collections/:id
-router.put('/collections/:id', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Update bookmark collection endpoint - To be implemented',
-    endpoint: 'PUT /api/v1/bookmarks/collections/:id',
-    collectionId: req.params.id
-  });
-});
-
-// DELETE /api/v1/bookmarks/collections/:id
-router.delete('/collections/:id', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Delete bookmark collection endpoint - To be implemented',
-    endpoint: 'DELETE /api/v1/bookmarks/collections/:id',
-    collectionId: req.params.id
-  });
-});
-
-// GET /api/v1/bookmarks/reading-history
+// GET /api/v1/bookmarks/reading-history - Get reading history
 router.get('/reading-history', (req: Request, res: Response) => {
   res.status(501).json({
-    message: 'Get reading history endpoint - To be implemented',
-    endpoint: 'GET /api/v1/bookmarks/reading-history',
-    queryParams: {
+    message: 'Get reading history endpoint not implemented',
+    query_params: {
       page: 'number (optional)',
-      limit: 'number (optional)'
+      limit: 'number (optional)',
+      date_from: 'string (optional) - ISO date',
+      date_to: 'string (optional) - ISO date'
     }
   });
 });

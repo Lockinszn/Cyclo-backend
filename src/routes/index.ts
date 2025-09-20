@@ -29,7 +29,7 @@ router.get('/', (req, res) => {
       bookmarks: '/api/v1/bookmarks',
       notifications: '/api/v1/notifications'
     },
-    documentation: 'https://docs.cyclo.com/api',
+    documentation: '',
     status: 'active'
   });
 });

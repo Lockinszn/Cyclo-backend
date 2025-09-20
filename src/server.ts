@@ -1,11 +1,12 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import compression from 'compression';
-import dotenv from 'dotenv';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { db, testConnection } from '../db';
+import express, { Application, Request, Response, NextFunction } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import compression from "compression";
+import dotenv from "dotenv";
+import { RateLimiterMemory } from "rate-limiter-flexible";
+import { db, testConnection } from "./db";
+import apiRoutes from "./routes";
 
 // Load environment variables
 dotenv.config();
@@ -16,121 +17,123 @@ const PORT = process.env.PORT || 3000;
 
 // Rate limiting
 const rateLimiter = new RateLimiterMemory({
-  keyGenerator: (req: Request) => req.ip || 'unknown',
+  keyGenerator: (req: Request) => req.ip || "unknown",
   points: 100, // Number of requests
   duration: 60, // Per 60 seconds
 });
 
 // Rate limiting middleware
-const rateLimitMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+const rateLimitMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    await rateLimiter.consume(req.ip || 'unknown');
+    await rateLimiter.consume(req.ip || "unknown");
     next();
   } catch (rejRes: any) {
     const secs = Math.round(rejRes.msBeforeNext / 1000) || 1;
-    res.set('Retry-After', String(secs));
+    res.set("Retry-After", String(secs));
     res.status(429).json({
-      error: 'Too Many Requests',
-      message: 'Rate limit exceeded. Please try again later.',
-      retryAfter: secs
+      error: "Too Many Requests",
+      message: "Rate limit exceeded. Please try again later.",
+      retryAfter: secs,
     });
   }
 };
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false
-}));
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
 
 // General middleware
 app.use(compression());
-app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(morgan("combined"));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(rateLimitMiddleware);
 
 // Health check endpoint
-app.get('/health', async (req: Request, res: Response) => {
+app.get("/health", async (req: Request, res: Response) => {
   try {
     // Test database connection
     await testConnection();
-    
+
     res.status(200).json({
-      status: 'OK',
-      message: 'Cyclo Backend API is running',
+      status: "OK",
+      message: "Cyclo Backend API is running",
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      database: 'Connected'
+      version: process.env.npm_package_version || "1.0.0",
+      database: "Connected",
     });
   } catch (error) {
     res.status(503).json({
-      status: 'Service Unavailable',
-      message: 'Database connection failed',
+      status: "Service Unavailable",
+      message: "Database connection failed",
       timestamp: new Date().toISOString(),
-      error: process.env.NODE_ENV === 'development' ? error : 'Internal server error'
+      error:
+        process.env.NODE_ENV === "development"
+          ? error
+          : "Internal server error",
     });
   }
 });
 
-// API routes will be added here
-app.use('/api/v1', (req: Request, res: Response) => {
-  res.status(200).json({
-    message: 'Cyclo API v1 - Routes will be implemented here',
-    endpoints: {
-      auth: '/api/v1/auth',
-      users: '/api/v1/users',
-      posts: '/api/v1/posts',
-      comments: '/api/v1/comments',
-      bookmarks: '/api/v1/bookmarks',
-      notifications: '/api/v1/notifications'
-    }
-  });
-});
+// API routes
+app.use("/api/v1", apiRoutes);
 
 // 404 handler
-app.use('*', (req: Request, res: Response) => {
+app.use("*", (req: Request, res: Response) => {
   res.status(404).json({
-    error: 'Not Found',
+    error: "Not Found",
     message: `Route ${req.originalUrl} not found`,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Global error handler
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Global Error Handler:', error);
-  
+  console.error("Global Error Handler:", error);
+
   res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
-    timestamp: new Date().toISOString()
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? error.message
+        : "Something went wrong",
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Shutting down gracefully...");
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received. Shutting down gracefully...');
+process.on("SIGINT", () => {
+  console.log("SIGINT received. Shutting down gracefully...");
   process.exit(0);
 });
 
@@ -139,16 +142,16 @@ const startServer = async () => {
   try {
     // Test database connection on startup
     await testConnection();
-    console.log('✅ Database connection established');
-    
+    console.log("✅ Database connection established");
+
     app.listen(PORT, () => {
       console.log(`🚀 Cyclo Backend Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 };
