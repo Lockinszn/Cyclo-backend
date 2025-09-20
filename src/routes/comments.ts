@@ -69,15 +69,15 @@ router.post('/:id/like', (req: Request, res: Response) => {
 });
 
 // DELETE /api/v1/comments/:id/like
-router.delete('/:id/like', (req: Request, res: Response) => {
+router.delete('/:id/unlike', (req: Request, res: Response) => {
   res.status(501).json({
     message: 'Unlike comment endpoint - To be implemented',
-    endpoint: 'DELETE /api/v1/comments/:id/like',
+    endpoint: 'DELETE /api/v1/comments/:id/unlike',
     commentId: req.params.id
   });
 });
 
-// POST /api/v1/comments/:id/flag
+// POST /api/v1/comments/:id/flag (Admin only) (Optional)
 router.post('/:id/flag', (req: Request, res: Response) => {
   res.status(501).json({
     message: 'Flag comment endpoint - To be implemented',
