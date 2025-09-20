@@ -7,8 +7,6 @@ export const categories = mysqlTable('categories', {
   name: varchar('name', { length: 100 }).notNull().unique(),
   slug: varchar('slug', { length: 100 }).notNull().unique(),
   description: text('description'),
-  color: varchar('color', { length: 7 }).default('#6366f1'), // Default purple color
-  icon: varchar('icon', { length: 100 }),
   isActive: boolean('is_active').default(true),
   postsCount: int('posts_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
@@ -20,7 +18,6 @@ export const tags = mysqlTable('tags', {
   name: varchar('name', { length: 50 }).notNull().unique(),
   slug: varchar('slug', { length: 50 }).notNull().unique(),
   description: text('description'),
-  color: varchar('color', { length: 7 }).default('#8b5cf6'), // Default purple variant
   postsCount: int('posts_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
 });

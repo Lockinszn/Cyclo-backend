@@ -13,11 +13,10 @@ dotenv.config();
 
 // Create Express application
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 // Rate limiting
 const rateLimiter = new RateLimiterMemory({
-  keyGenerator: (req: Request) => req.ip || "unknown",
   points: 100, // Number of requests
   duration: 60, // Per 60 seconds
 });
@@ -60,7 +59,7 @@ app.use(
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "*",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
