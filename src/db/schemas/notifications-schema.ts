@@ -7,6 +7,7 @@ import {
   mysqlEnum,
   int,
   json,
+  index,
 } from "drizzle-orm/mysql-core";
 import { createId } from "@paralleldrive/cuid2";
 import { users } from "./users-schema";
@@ -66,7 +67,24 @@ export const notifications = mysqlTable("notifications", {
   actionText: varchar("action_text", { length: 100 }), // Text for the action button/link
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
-});
+}, (table) => ([
+  // Index for recipient notifications
+  index("notifications_recipient_id_idx").on(table.recipientId),
+  // Index for sender notifications
+  index("notifications_sender_id_idx").on(table.senderId),
+  // Index for notification type filtering
+  index("notifications_type_idx").on(table.type),
+  // Index for read status filtering
+  index("notifications_is_read_idx").on(table.isRead),
+  // Index for notification timestamps
+  index("notifications_created_at_idx").on(table.createdAt),
+  // Composite index for recipient's unread notifications
+  index("notifications_recipient_unread_idx").on(table.recipientId, table.isRead),
+  // Composite index for recipient's notifications by time
+  index("notifications_recipient_created_idx").on(table.recipientId, table.createdAt),
+  // Composite index for notification type analytics
+  index("notifications_type_created_idx").on(table.type, table.createdAt),
+]));
 
 export const notificationTemplates = mysqlTable("notification_templates", {
   id: varchar("id", { length: 128 })
@@ -90,7 +108,12 @@ export const notificationTemplates = mysqlTable("notification_templates", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
-});
+}, (table) => ([
+  // Index for template type lookups
+  index("notification_templates_type_idx").on(table.type),
+  // Index for active template filtering
+  index("notification_templates_is_active_idx").on(table.isActive),
+]));
 
 export const notificationSettings = mysqlTable("notification_settings", {
   id: varchar("id", { length: 128 })
@@ -125,7 +148,14 @@ export const notificationSettings = mysqlTable("notification_settings", {
   ),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
-});
+}, (table) => ([
+  // Index for user settings lookup (already unique, but for consistency)
+  index("notification_settings_user_id_idx").on(table.userId),
+  // Index for email enabled users
+  index("notification_settings_enable_email_idx").on(table.enableEmail),
+  // Index for in-app enabled users
+  index("notification_settings_enable_in_app_idx").on(table.enableInApp),
+]));
 
 export const notificationQueue = mysqlTable("notification_queue", {
   id: varchar("id", { length: 128 })
@@ -157,7 +187,24 @@ export const notificationQueue = mysqlTable("notification_queue", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
-});
+}, (table) => ([
+  // Index for notification queue lookups
+  index("notification_queue_notification_id_idx").on(table.notificationId),
+  // Index for channel filtering
+  index("notification_queue_channel_idx").on(table.channel),
+  // Index for status filtering (critical for queue processing)
+  index("notification_queue_status_idx").on(table.status),
+  // Index for scheduled processing
+  index("notification_queue_scheduled_for_idx").on(table.scheduledFor),
+  // Index for attempts tracking
+  index("notification_queue_attempts_idx").on(table.attempts),
+  // Composite index for queue processing (status + scheduled time)
+  index("notification_queue_status_scheduled_idx").on(table.status, table.scheduledFor),
+  // Composite index for channel-specific queue processing
+  index("notification_queue_channel_status_idx").on(table.channel, table.status),
+  // Composite index for retry management
+  index("notification_queue_status_attempts_idx").on(table.status, table.attempts),
+]));
 
 // Type exports
 export type Notification = typeof notifications.$inferSelect;
