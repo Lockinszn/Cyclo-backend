@@ -38,11 +38,7 @@ export const notifications = mysqlTable("notifications", {
     "account_verified",
     "welcome",
     "newsletter",
-    "system_update",
-    "security_alert",
     "weekly_digest",
-    "trending_post",
-    "milestone_reached",
   ]).notNull(),
 
   title: varchar("title", { length: 255 }).notNull(),
@@ -56,34 +52,18 @@ export const notifications = mysqlTable("notifications", {
   metadata: json("metadata"), // Additional data like post title, comment excerpt, etc.
 
   // Delivery channels
-  channels: json("channels"), // ['in_app', 'email', 'push'] - which channels to send through
+  channels: json("channels"), // ['in_app', 'email'] - which channels to send through
 
   // Status tracking
   isRead: boolean("is_read").default(false),
   readAt: timestamp("read_at"),
-
   // Email delivery
   emailSent: boolean("email_sent").default(false),
   emailSentAt: timestamp("email_sent_at"),
-  emailDelivered: boolean("email_delivered").default(false),
-  emailOpened: boolean("email_opened").default(false),
-
-  // Push notification delivery
-  pushSent: boolean("push_sent").default(false),
-  pushSentAt: timestamp("push_sent_at"),
-  pushDelivered: boolean("push_delivered").default(false),
-  pushOpened: boolean("push_opened").default(false),
-
-  // Priority and scheduling
-  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default(
-    "normal"
-  ),
-  scheduledFor: timestamp("scheduled_for"),
 
   // Action buttons/links
-  actionUrl: varchar("action_url", { length: 500 }),
-  actionText: varchar("action_text", { length: 100 }),
-
+  actionUrl: varchar("action_url", { length: 500 }), // URL to open when clicking the notification
+  actionText: varchar("action_text", { length: 100 }), // Text for the action button/link
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
@@ -102,16 +82,10 @@ export const notificationTemplates = mysqlTable("notification_templates", {
   emailBodyTemplate: text("email_body_template"),
 
   // Default settings
-  defaultChannels: json("default_channels"), // ['in_app', 'email', 'push']
-  defaultPriority: mysqlEnum("default_priority", [
-    "low",
-    "normal",
-    "high",
-    "urgent",
-  ]).default("normal"),
+  defaultChannels: json("default_channels"), // ['in_app', 'email']
 
   // Template variables documentation
-  variables: json("variables"), // Available template variables
+  variables: json("variables"), // Available template variables in the template that can be used in the title and message templates
 
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -141,39 +115,14 @@ export const notificationSettings = mysqlTable("notification_settings", {
   postPublishedNotifications: boolean("post_published_notifications").default(
     true
   ),
-  postFeaturedNotifications: boolean("post_featured_notifications").default(
-    true
-  ),
   postModerationNotifications: boolean("post_moderation_notifications").default(
     true
   ),
 
-  // System notifications
-  securityAlertNotifications: boolean("security_alert_notifications").default(
-    true
-  ),
-  systemUpdateNotifications: boolean("system_update_notifications").default(
-    true
-  ),
   newsletterNotifications: boolean("newsletter_notifications").default(true),
   weeklyDigestNotifications: boolean("weekly_digest_notifications").default(
     true
   ),
-
-  // Timing preferences
-  quietHoursStart: varchar("quiet_hours_start", { length: 5 }), // HH:MM format
-  quietHoursEnd: varchar("quiet_hours_end", { length: 5 }), // HH:MM format
-  timezone: varchar("timezone", { length: 50 }).default("UTC"),
-
-  // Frequency settings
-  digestFrequency: mysqlEnum("digest_frequency", [
-    "daily",
-    "weekly",
-    "monthly",
-    "never",
-  ]).default("weekly"),
-  maxDailyNotifications: int("max_daily_notifications").default(50),
-
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
@@ -185,7 +134,7 @@ export const notificationQueue = mysqlTable("notification_queue", {
   notificationId: varchar("notification_id", { length: 128 })
     .notNull()
     .references(() => notifications.id, { onDelete: "cascade" }),
-  channel: mysqlEnum("channel", ["in_app", "email", "push"]).notNull(),
+  channel: mysqlEnum("channel", ["in_app", "email"]).notNull(),
 
   status: mysqlEnum("status", [
     "pending",
@@ -196,7 +145,6 @@ export const notificationQueue = mysqlTable("notification_queue", {
   ]).default("pending"),
   attempts: int("attempts").default(0),
   maxAttempts: int("max_attempts").default(3),
-
   scheduledFor: timestamp("scheduled_for").defaultNow(),
   processedAt: timestamp("processed_at"),
 
@@ -211,31 +159,6 @@ export const notificationQueue = mysqlTable("notification_queue", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
-export const pushSubscriptions = mysqlTable("push_subscriptions", {
-  id: varchar("id", { length: 128 })
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  userId: varchar("user_id", { length: 128 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-
-  // Push subscription data
-  endpoint: text("endpoint").notNull(),
-  p256dhKey: text("p256dh_key").notNull(),
-  authKey: text("auth_key").notNull(),
-
-  // Device/browser info
-  userAgent: text("user_agent"),
-  deviceType: varchar("device_type", { length: 50 }), // 'desktop', 'mobile', 'tablet'
-  browserName: varchar("browser_name", { length: 50 }),
-
-  isActive: boolean("is_active").default(true),
-  lastUsed: timestamp("last_used").defaultNow(),
-
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
-});
-
 // Type exports
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
@@ -245,5 +168,3 @@ export type NotificationSettings = typeof notificationSettings.$inferSelect;
 export type NewNotificationSettings = typeof notificationSettings.$inferInsert;
 export type NotificationQueue = typeof notificationQueue.$inferSelect;
 export type NewNotificationQueue = typeof notificationQueue.$inferInsert;
-export type PushSubscription = typeof pushSubscriptions.$inferSelect;
-export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;

@@ -1,66 +1,18 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
-
-// Import all schemas
-export * from './schemas/users-schema';
-export * from './schemas/posts-schema';
-export * from './schemas/comments-schema';
-export * from './schemas/bookmarks-schema';
-export * from './schemas/notifications-schema';
-
-// Import schema tables for database operations
-import { 
-  users, 
-  userSessions, 
-  userFollows 
-} from './schemas/users-schema';
-
-import { 
-  categories, 
-  tags, 
-  posts, 
-  postTags, 
-  postViews, 
-  postLikes, 
-  postRevisions 
-} from './schemas/posts-schema';
-
-import { 
-  comments, 
-  commentLikes, 
-  commentFlags, 
-  commentRevisions, 
-  commentMentions 
-} from './schemas/comments-schema';
-
-import { 
-  bookmarks, 
-  bookmarkCollections, 
-  postShares, 
-  userActivity, 
-  readingHistory, 
-  userPreferences, 
-  reportedContent 
-} from './schemas/bookmarks-schema';
-
-import { 
-  notifications, 
-  notificationTemplates, 
-  notificationSettings, 
-  notificationQueue, 
-  pushSubscriptions 
-} from './schemas/notifications-schema';
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+import * as schemas from "@/db/schemas";
 
 // Database configuration
 const connectionConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'cyclo_db',
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT || "4000"),
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "cyclo_db",
+  ssl: { rejectUnauthorized: true },
 };
 
+export const connectionUri = `mysql://${connectionConfig.user}:${connectionConfig.password}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}?ssl={"rejectUnauthorized":true}`;
 // Create connection pool
 const pool = mysql.createPool({
   ...connectionConfig,
@@ -71,45 +23,8 @@ const pool = mysql.createPool({
 
 // Create Drizzle instance
 export const db = drizzle(pool, {
-  schema: {
-    // User schemas
-    users,
-    userSessions,
-    userFollows,
-    
-    // Content schemas
-    categories,
-    tags,
-    posts,
-    postTags,
-    postViews,
-    postLikes,
-    postRevisions,
-    
-    // Comment schemas
-    comments,
-    commentLikes,
-    commentFlags,
-    commentRevisions,
-    commentMentions,
-    
-    // Interaction schemas
-    bookmarks,
-    bookmarkCollections,
-    postShares,
-    userActivity,
-    readingHistory,
-    userPreferences,
-    reportedContent,
-    
-    // Notification schemas
-    notifications,
-    notificationTemplates,
-    notificationSettings,
-    notificationQueue,
-    pushSubscriptions,
-  },
-  mode: 'default',
+  schema: schemas,
+  mode: "planetscale",
 });
 
 // Export the connection pool for direct queries if needed
@@ -121,10 +36,10 @@ export async function testConnection() {
     const connection = await pool.getConnection();
     await connection.ping();
     connection.release();
-    console.log('✅ Database connection successful');
+    console.log("✅ Database connection successful");
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    console.error("❌ Database connection failed:", error);
     return false;
   }
 }
@@ -133,51 +48,10 @@ export async function testConnection() {
 export async function closeConnection() {
   try {
     await pool.end();
-    console.log('✅ Database connection pool closed');
+    console.log("✅ Database connection pool closed");
   } catch (error) {
-    console.error('❌ Error closing database connection:', error);
+    console.error("❌ Error closing database connection:", error);
   }
 }
-
-// Schema collections for easier access
-export const schemas = {
-  users: {
-    users,
-    userSessions,
-    userFollows,
-  },
-  content: {
-    categories,
-    tags,
-    posts,
-    postTags,
-    postViews,
-    postLikes,
-    postRevisions,
-  },
-  comments: {
-    comments,
-    commentLikes,
-    commentFlags,
-    commentRevisions,
-    commentMentions,
-  },
-  interactions: {
-    bookmarks,
-    bookmarkCollections,
-    postShares,
-    userActivity,
-    readingHistory,
-    userPreferences,
-    reportedContent,
-  },
-  notifications: {
-    notifications,
-    notificationTemplates,
-    notificationSettings,
-    notificationQueue,
-    pushSubscriptions,
-  },
-};
 
 export default db;
