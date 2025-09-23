@@ -1,67 +1,27 @@
+import { UserController } from '@/controllers/user-controller';
 import { Router, Request, Response } from 'express';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/v1/users/profile
-router.get('/profile', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Get user profile endpoint - To be implemented',
-    endpoint: 'GET /api/v1/users/profile'
-  });
-});
+router.get('/profile', UserController.getUserProfile);
 
 // PUT /api/v1/users/profile
-router.put('/profile', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Update user profile endpoint - To be implemented',
-    endpoint: 'PUT /api/v1/users/profile'
-    
-  });
-});
+router.put('/profile', UserController.updateUserProfile);
 
-// GET /api/v1/users/:id
-router.get('/:id', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Get user by ID endpoint - To be implemented',
-    endpoint: 'GET /api/v1/users/:id',
-    userId: req.params.id
-  });
-});
+// GET /api/v1/users/:id 
+router.get('/:id', UserController.getUserById);
 
 // POST /api/v1/users/:id/follow (Optional)
-router.post('/:id/follow', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Follow user endpoint - To be implemented',
-    endpoint: 'POST /api/v1/users/:id/follow',
-    userId: req.params.id
-  });
-});
+router.post('/:id/follow', UserController.followUser);
 
 // DELETE /api/v1/users/:id/follow (Optional)
-router.delete('/:id/follow', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Unfollow user endpoint - To be implemented',
-    endpoint: 'DELETE /api/v1/users/:id/follow',
-    userId: req.params.id
-  });
-});
+router.delete('/:id/follow', UserController.unfollowUser);
 
 // GET /api/v1/users/:id/followers (Optional)
-router.get('/:id/followers', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Get user followers endpoint - To be implemented',
-    endpoint: 'GET /api/v1/users/:id/followers',
-    userId: req.params.id
-  });
-});
+router.get('/:id/followers', UserController.getFollowers);
 
 // GET /api/v1/users/:id/following (Optional)
-router.get('/:id/following', (req: Request, res: Response) => {
-  res.status(501).json({
-    message: 'Get user following endpoint - To be implemented',
-    endpoint: 'GET /api/v1/users/:id/following',
-    userId: req.params.id
-  });
-});
+router.get('/:id/following', UserController.getFollowing);
 
 export default router;
