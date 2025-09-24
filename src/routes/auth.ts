@@ -1,17 +1,17 @@
 import { Router } from "express";
 import { AuthController } from "@/controllers/auth-controller";
-import { 
-  authenticateToken, 
+import {
+  authenticateToken,
   optionalAuth,
   authRateLimit,
-  loginRateLimit,
+  advancedLoginRateLimit,
   passwordResetRateLimit,
   emailVerificationRateLimit,
   registrationRateLimit,
   validateRequestBody,
   validateContentType,
   securityHeaders,
-  authErrorHandler
+  authErrorHandler,
 } from "@/middleware/auth-middleware";
 
 const router: Router = Router();
@@ -29,7 +29,7 @@ router.get("/health", AuthController.health);
 
 // POST /api/v1/auth/register - User registration
 router.post(
-  "/register", 
+  "/register",
   registrationRateLimit,
   validateRequestBody,
   AuthController.register
@@ -37,15 +37,15 @@ router.post(
 
 // POST /api/v1/auth/login - User login
 router.post(
-  "/login", 
-  loginRateLimit,
+  "/login",
+  advancedLoginRateLimit,
   validateRequestBody,
   AuthController.login
 );
 
 // POST /api/v1/auth/refresh - Token refresh
 router.post(
-  "/refresh", 
+  "/refresh",
   authRateLimit,
   validateRequestBody,
   AuthController.refresh
@@ -53,7 +53,7 @@ router.post(
 
 // POST /api/v1/auth/forgot-password - Password reset request
 router.post(
-  "/forgot-password", 
+  "/forgot-password",
   passwordResetRateLimit,
   validateRequestBody,
   AuthController.forgotPassword
@@ -61,7 +61,7 @@ router.post(
 
 // POST /api/v1/auth/reset-password - Password reset confirmation
 router.post(
-  "/reset-password", 
+  "/reset-password",
   passwordResetRateLimit,
   validateRequestBody,
   AuthController.resetPassword
@@ -69,7 +69,7 @@ router.post(
 
 // POST /api/v1/auth/verify-email - Email verification
 router.post(
-  "/verify-email", 
+  "/verify-email",
   emailVerificationRateLimit,
   validateRequestBody,
   AuthController.verifyEmail
@@ -77,7 +77,7 @@ router.post(
 
 // POST /api/v1/auth/resend-verification - Resend email verification
 router.post(
-  "/resend-verification", 
+  "/resend-verification",
   emailVerificationRateLimit,
   validateRequestBody,
   AuthController.resendVerification
@@ -85,7 +85,7 @@ router.post(
 
 // POST /api/v1/auth/validate-token - Validate JWT token
 router.post(
-  "/validate-token", 
+  "/validate-token",
   authRateLimit,
   validateRequestBody,
   AuthController.validateToken
@@ -94,24 +94,14 @@ router.post(
 // Protected authentication endpoints (require authentication)
 
 // POST /api/v1/auth/logout - User logout
-router.post(
-  "/logout", 
-  authRateLimit,
-  authenticateToken,
-  AuthController.logout
-);
+router.post("/logout", authRateLimit, authenticateToken, AuthController.logout);
 
 // GET /api/v1/auth/me - Get current user profile
-router.get(
-  "/me", 
-  authRateLimit,
-  authenticateToken,
-  AuthController.getMe
-);
+router.get("/me", authRateLimit, authenticateToken, AuthController.getMe);
 
 // POST /api/v1/auth/change-password - Change password (authenticated)
 router.post(
-  "/change-password", 
+  "/change-password",
   authRateLimit,
   authenticateToken,
   validateRequestBody,

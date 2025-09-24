@@ -28,11 +28,8 @@ export const authenticateToken = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    const token =
-      authHeader && authHeader.startsWith("Bearer ")
-        ? authHeader.substring(7)
-        : null;
 
+    const token = JWTUtils.extractTokenFromHeader(authHeader || "");
     if (!token) {
       res.status(401).json({
         success: false,
@@ -73,7 +70,8 @@ export const authenticateToken = async (
     req.user = {
       userId: payload.userId,
       email: payload.email,
-      role: payload.role,
+      role: payload.role ?? UserRole.USER,
+      isEmailVerified: payload.isEmailVerified ?? false,
     };
 
     next();
@@ -100,10 +98,7 @@ export const optionalAuth = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    const token =
-      authHeader && authHeader.startsWith("Bearer ")
-        ? authHeader.substring(7)
-        : null;
+    const token = JWTUtils.extractTokenFromHeader(authHeader || "");
 
     if (token && !JWTUtils.isTokenBlacklisted(token)) {
       const payload = JWTUtils.verifyAccessToken(token);
@@ -111,7 +106,8 @@ export const optionalAuth = async (
         req.user = {
           userId: payload.userId,
           email: payload.email,
-          role: payload.role,
+          isEmailVerified: payload.isEmailVerified ?? false,
+          role: payload.role ?? UserRole.USER,
         };
       }
     }
@@ -164,12 +160,15 @@ export const requireRole = (roles: UserRole | UserRole[]) => {
 /**
  * Admin Only Middleware
  */
-export const requireAdmin = requireRole("admin");
+export const requireAdmin = requireRole(UserRole.ADMIN);
 
 /**
  * Moderator or Admin Middleware
  */
-export const requireModerator = requireRole(["admin", "moderator"]);
+export const requireModerator = requireRole([
+  UserRole.ADMIN,
+  UserRole.MODERATOR,
+]);
 
 /**
  * Rate Limiting Configurations

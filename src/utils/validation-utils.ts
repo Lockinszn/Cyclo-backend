@@ -181,7 +181,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map((err) => err.message),
+          errors: error.issues.map((err) => err.message),
         };
       }
       return { isValid: false, errors: ["Invalid password"] };
@@ -229,7 +229,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(
+          errors: error.issues.map(
             (err) => `${err.path.join(".")}: ${err.message}`
           ),
         };
@@ -255,7 +255,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(
+          errors: error.issues.map(
             (err) => `${err.path.join(".")}: ${err.message}`
           ),
         };
@@ -281,7 +281,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(
+          errors: error.issues.map(
             (err) => `${err.path.join(".")}: ${err.message}`
           ),
         };
@@ -307,7 +307,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(
+          errors: error.issues.map(
             (err) => `${err.path.join(".")}: ${err.message}`
           ),
         };
@@ -333,7 +333,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(
+          errors: error.issues.map(
             (err) => `${err.path.join(".")}: ${err.message}`
           ),
         };
@@ -359,7 +359,7 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(
+          errors: error.issues.map(
             (err) => `${err.path.join(".")}: ${err.message}`
           ),
         };

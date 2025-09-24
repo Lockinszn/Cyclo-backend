@@ -100,7 +100,7 @@ export class CryptoUtils {
   }
 
   /**
-   * Generates a Time-based One-Time Password (TOTP) token 
+   * Generates a Time-based One-Time Password (TOTP) token
    * @param secret - The secret key used for generating the TOTP
    * @param timeStep - Time step in seconds (default: 30 seconds)
    * @returns A 6-digit TOTP code as string
@@ -120,18 +120,40 @@ export class CryptoUtils {
       // Update HMAC with the time buffer
       hmac.update(timeBuffer);
       // Get the resulting hash
-      const hash = hmac.digest();
+      const hash = hmac.digest() as Buffer;
 
-      // Dynamic Truncation:
-      // Get the last 4 bits of the last byte to use as offset
-      const offset = hash?.[hash.length - 1] & 0xf;
-      // Generate 31-bit integer from 4 bytes starting at offset
-      // Using bitwise operations to combine bytes into a single number
+      // Add null check for safety
+      if (!hash) {
+        throw new Error("Failed to generate hash digest");
+      }
+
+      // Dynamic Truncation without bitwise operators:
+      // Get the last byte and extract the last 4 bits using modulus
+      const lastByte = hash[hash.length - 1]!;
+      const offset = lastByte % 16; // equivalent to & 0xf
+
+      // Add null check for safety
+      if (offset + 4 > hash.length) {
+        throw new Error("Invalid offset for TOTP generation");
+      }
+      // Extract 4 bytes starting at offset and combine them
+      const byte1 = hash[offset]! % 128; // equivalent to & 0x7f (ensure 31 bits max)
+      const byte2 = hash[offset + 1];
+      const byte3 = hash[offset + 2];
+      const byte4 = hash[offset + 3];
+
+      // Add null check for safety
+      if (byte2 === undefined || byte3 === undefined || byte4 === undefined) {
+        throw new Error("Invalid hash bytes for TOTP generation");
+      }
+
+      // Combine the bytes into a single number using multiplication instead of bit shifting
+      // Original: ((byte1 & 0x7f) << 24) | ((byte2 & 0xff) << 16) | ((byte3 & 0xff) << 8) | (byte4 & 0xff)
       const code =
-        ((hash?.[offset] & 0x7f) << 24) | // First byte & 0x7f to ensure 31 bits
-        ((hash?.[offset + 1] & 0xff) << 16) | // Second byte
-        ((hash?.[offset + 2] & 0xff) << 8) | // Third byte
-        (hash?.[offset + 3] & 0xff); // Fourth byte
+        byte1 * Math.pow(2, 24) + // equivalent to << 24
+        byte2 * Math.pow(2, 16) + // equivalent to << 16
+        byte3 * Math.pow(2, 8) + // equivalent to << 8
+        byte4; // equivalent to no shift
 
       // Take modulus to get 6 digits and pad with leading zeros if necessary
       return (code % 1000000).toString().padStart(6, "0");

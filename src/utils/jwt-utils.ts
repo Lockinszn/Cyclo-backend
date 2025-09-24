@@ -72,7 +72,7 @@ export class JWTUtils {
       };
 
       return jwt.sign(tokenPayload, secret, {
-        expiresIn: expiry,
+        expiresIn: expiry as any,
         issuer: "cyclo-backend",
         audience: "cyclo-frontend",
       });
@@ -369,6 +369,6 @@ export class JWTUtils {
       throw new Error("Invalid authorization header format");
     }
 
-    return parts[1];
+    return parts[1] as string;
   }
 }

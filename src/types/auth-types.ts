@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { type Request } from "express";
 
 // User-related interfaces
 export interface User {
@@ -104,9 +104,11 @@ export interface GenericResponse {
 export interface JWTPayload {
   userId: string;
   email: string;
-  type: "access" | "refresh";
+  type: "access" | "refresh" | "email_verification" | "password_reset";
   iat?: number;
   exp?: number;
+  role?: UserRole;
+  isEmailVerified?: boolean;
 }
 
 // User session interface
