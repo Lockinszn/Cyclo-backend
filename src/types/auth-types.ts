@@ -149,7 +149,7 @@ export interface RateLimitConfig {
 export interface EmailTemplate {
   subject: string;
   html: string;
-  text?: string;
+  text: string;
 }
 
 export interface EmailVerificationData {

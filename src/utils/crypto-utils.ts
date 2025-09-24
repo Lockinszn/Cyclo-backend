@@ -1,5 +1,5 @@
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 /**
  * Crypto utilities for password hashing and secure token generation
@@ -18,7 +18,7 @@ export class CryptoUtils {
       const salt = await bcrypt.genSalt(this.SALT_ROUNDS);
       return await bcrypt.hash(password, salt);
     } catch (error) {
-      throw new Error('Failed to hash password');
+      throw new Error("Failed to hash password");
     }
   }
 
@@ -28,11 +28,14 @@ export class CryptoUtils {
    * @param hashedPassword - Hashed password to compare against
    * @returns Promise<boolean> - True if passwords match, false otherwise
    */
-  static async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+  static async comparePassword(
+    password: string,
+    hashedPassword: string
+  ): Promise<boolean> {
     try {
       return await bcrypt.compare(password, hashedPassword);
     } catch (error) {
-      throw new Error('Failed to compare passwords');
+      throw new Error("Failed to compare passwords");
     }
   }
 
@@ -43,9 +46,9 @@ export class CryptoUtils {
    */
   static generateSecureToken(length: number = this.TOKEN_LENGTH): string {
     try {
-      return crypto.randomBytes(length).toString('hex');
+      return crypto.randomBytes(length).toString("hex");
     } catch (error) {
-      throw new Error('Failed to generate secure token');
+      throw new Error("Failed to generate secure token");
     }
   }
 
@@ -56,17 +59,18 @@ export class CryptoUtils {
    */
   static generateRandomString(length: number): string {
     try {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let result = '';
+      const chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let result = "";
       const randomBytes = crypto.randomBytes(length);
-      
+
       for (let i = 0; i < length; i++) {
-        result += chars[randomBytes[i] % chars.length];
+        result += chars[randomBytes?.[i] ?? 0 % chars.length];
       }
-      
+
       return result;
     } catch (error) {
-      throw new Error('Failed to generate random string');
+      throw new Error("Failed to generate random string");
     }
   }
 
@@ -78,7 +82,7 @@ export class CryptoUtils {
     try {
       return crypto.randomUUID();
     } catch (error) {
-      throw new Error('Failed to generate session ID');
+      throw new Error("Failed to generate session ID");
     }
   }
 
@@ -89,37 +93,50 @@ export class CryptoUtils {
    */
   static createHash(data: string): string {
     try {
-      return crypto.createHash('sha256').update(data).digest('hex');
+      return crypto.createHash("sha256").update(data).digest("hex");
     } catch (error) {
-      throw new Error('Failed to create hash');
+      throw new Error("Failed to create hash");
     }
   }
 
   /**
-   * Generate a time-based one-time password (TOTP) token
-   * @param secret - Secret key for TOTP generation
-   * @param timeStep - Time step in seconds (default: 30)
-   * @returns string - TOTP token
+   * Generates a Time-based One-Time Password (TOTP) token 
+   * @param secret - The secret key used for generating the TOTP
+   * @param timeStep - Time step in seconds (default: 30 seconds)
+   * @returns A 6-digit TOTP code as string
    */
   static generateTOTP(secret: string, timeStep: number = 30): string {
     try {
+      // Calculate the current time counter by dividing current Unix timestamp by timeStep
       const time = Math.floor(Date.now() / 1000 / timeStep);
+
+      // Create an 8-byte buffer to store the time counter
       const timeBuffer = Buffer.alloc(8);
+      // Write the time counter to the last 4 bytes of the buffer
       timeBuffer.writeUInt32BE(time, 4);
-      
-      const hmac = crypto.createHmac('sha1', secret);
+
+      // Create an HMAC using SHA1 algorithm with the provided secret
+      const hmac = crypto.createHmac("sha1", secret);
+      // Update HMAC with the time buffer
       hmac.update(timeBuffer);
+      // Get the resulting hash
       const hash = hmac.digest();
-      
-      const offset = hash[hash.length - 1] & 0xf;
-      const code = ((hash[offset] & 0x7f) << 24) |
-                   ((hash[offset + 1] & 0xff) << 16) |
-                   ((hash[offset + 2] & 0xff) << 8) |
-                   (hash[offset + 3] & 0xff);
-      
-      return (code % 1000000).toString().padStart(6, '0');
+
+      // Dynamic Truncation:
+      // Get the last 4 bits of the last byte to use as offset
+      const offset = hash?.[hash.length - 1] & 0xf;
+      // Generate 31-bit integer from 4 bytes starting at offset
+      // Using bitwise operations to combine bytes into a single number
+      const code =
+        ((hash?.[offset] & 0x7f) << 24) | // First byte & 0x7f to ensure 31 bits
+        ((hash?.[offset + 1] & 0xff) << 16) | // Second byte
+        ((hash?.[offset + 2] & 0xff) << 8) | // Third byte
+        (hash?.[offset + 3] & 0xff); // Fourth byte
+
+      // Take modulus to get 6 digits and pad with leading zeros if necessary
+      return (code % 1000000).toString().padStart(6, "0");
     } catch (error) {
-      throw new Error('Failed to generate TOTP');
+      throw new Error("Failed to generate TOTP");
     }
   }
 
@@ -140,7 +157,7 @@ export class CryptoUtils {
     if (password.length >= 8) {
       score += 1;
     } else {
-      feedback.push('Password must be at least 8 characters long');
+      feedback.push("Password must be at least 8 characters long");
     }
 
     if (password.length >= 12) {
@@ -151,32 +168,32 @@ export class CryptoUtils {
     if (/[a-z]/.test(password)) {
       score += 1;
     } else {
-      feedback.push('Password must contain at least one lowercase letter');
+      feedback.push("Password must contain at least one lowercase letter");
     }
 
     if (/[A-Z]/.test(password)) {
       score += 1;
     } else {
-      feedback.push('Password must contain at least one uppercase letter');
+      feedback.push("Password must contain at least one uppercase letter");
     }
 
     if (/\d/.test(password)) {
       score += 1;
     } else {
-      feedback.push('Password must contain at least one number');
+      feedback.push("Password must contain at least one number");
     }
 
     if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
       score += 1;
     } else {
-      feedback.push('Password must contain at least one special character');
+      feedback.push("Password must contain at least one special character");
     }
 
     // Common patterns check
     if (!/(.)\1{2,}/.test(password)) {
       score += 1;
     } else {
-      feedback.push('Password should not contain repeated characters');
+      feedback.push("Password should not contain repeated characters");
     }
 
     const isValid = score >= 5 && feedback.length === 0;
@@ -184,7 +201,7 @@ export class CryptoUtils {
     return {
       isValid,
       score,
-      feedback
+      feedback,
     };
   }
 
@@ -198,7 +215,7 @@ export class CryptoUtils {
       const randomPart = this.generateSecureToken(24);
       return prefix ? `${prefix}_${randomPart}` : randomPart;
     } catch (error) {
-      throw new Error('Failed to generate API key');
+      throw new Error("Failed to generate API key");
     }
   }
 

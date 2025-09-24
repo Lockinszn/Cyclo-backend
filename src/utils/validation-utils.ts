@@ -1,23 +1,23 @@
-import { z } from 'zod';
-import { CryptoUtils } from './crypto-utils';
+import { z } from "zod";
+import { CryptoUtils } from "./crypto-utils";
 
 /**
  * Validation utilities for authentication input validation using Zod schemas
  */
 export class ValidationUtils {
-  
   // Common validation patterns
   private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  private static readonly STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+  private static readonly STRONG_PASSWORD_REGEX =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
   /**
    * Email validation schema
    */
   static readonly emailSchema = z
-    .string()
-    .min(1, 'Email is required')
-    .email('Invalid email format')
-    .max(255, 'Email must be less than 255 characters')
+    .email({})
+
+    .min(1, "Email is required")
+    .max(255, "Email must be less than 255 characters")
     .toLowerCase()
     .trim();
 
@@ -26,23 +26,30 @@ export class ValidationUtils {
    */
   static readonly passwordSchema = z
     .string()
-    .min(8, 'Password must be at least 8 characters long')
-    .max(128, 'Password must be less than 128 characters')
-    .refine((password) => {
-      const validation = CryptoUtils.validatePasswordStrength(password);
-      return validation.isValid;
-    }, {
-      message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-    });
+    .min(8, "Password must be at least 8 characters long")
+    .max(128, "Password must be less than 128 characters")
+    .refine(
+      (password) => {
+        const validation = CryptoUtils.validatePasswordStrength(password);
+        return validation.isValid;
+      },
+      {
+        message:
+          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+      }
+    );
 
   /**
    * Name validation schema (for first name, last name)
    */
   static readonly nameSchema = z
     .string()
-    .min(1, 'Name is required')
-    .max(50, 'Name must be less than 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes')
+    .min(1, "Name is required")
+    .max(50, "Name must be less than 50 characters")
+    .regex(
+      /^[a-zA-Z\s'-]+$/,
+      "Name can only contain letters, spaces, hyphens, and apostrophes"
+    )
     .trim();
 
   /**
@@ -50,8 +57,11 @@ export class ValidationUtils {
    */
   static readonly optionalNameSchema = z
     .string()
-    .max(50, 'Name must be less than 50 characters')
-    .regex(/^[a-zA-Z\s'-]*$/, 'Name can only contain letters, spaces, hyphens, and apostrophes')
+    .max(50, "Name must be less than 50 characters")
+    .regex(
+      /^[a-zA-Z\s'-]*$/,
+      "Name can only contain letters, spaces, hyphens, and apostrophes"
+    )
     .trim()
     .optional();
 
@@ -60,8 +70,8 @@ export class ValidationUtils {
    */
   static readonly tokenSchema = z
     .string()
-    .min(1, 'Token is required')
-    .max(1000, 'Token is too long');
+    .min(1, "Token is required")
+    .max(1000, "Token is too long");
 
   /**
    * User registration validation schema
@@ -70,7 +80,7 @@ export class ValidationUtils {
     email: this.emailSchema,
     password: this.passwordSchema,
     firstName: this.optionalNameSchema,
-    lastName: this.optionalNameSchema
+    lastName: this.optionalNameSchema,
   });
 
   /**
@@ -78,14 +88,14 @@ export class ValidationUtils {
    */
   static readonly loginSchema = z.object({
     email: this.emailSchema,
-    password: z.string().min(1, 'Password is required')
+    password: z.string().min(1, "Password is required"),
   });
 
   /**
    * Forgot password validation schema
    */
   static readonly forgotPasswordSchema = z.object({
-    email: this.emailSchema
+    email: this.emailSchema,
   });
 
   /**
@@ -93,44 +103,53 @@ export class ValidationUtils {
    */
   static readonly resetPasswordSchema = z.object({
     token: this.tokenSchema,
-    password: this.passwordSchema
+    password: this.passwordSchema,
   });
 
   /**
    * Email verification validation schema
    */
   static readonly verifyEmailSchema = z.object({
-    token: this.tokenSchema
+    token: this.tokenSchema,
   });
 
   /**
    * Refresh token validation schema
    */
   static readonly refreshTokenSchema = z.object({
-    refreshToken: this.tokenSchema
+    refreshToken: this.tokenSchema,
   });
 
   /**
    * Change password validation schema
    */
   static readonly changePasswordSchema = z.object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: this.passwordSchema
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: this.passwordSchema,
   });
 
   /**
    * Update profile validation schema
    */
-  static readonly updateProfileSchema = z.object({
-    firstName: this.optionalNameSchema,
-    lastName: this.optionalNameSchema,
-    email: this.emailSchema.optional()
-  }).refine((data) => {
-    // At least one field must be provided
-    return data.firstName !== undefined || data.lastName !== undefined || data.email !== undefined;
-  }, {
-    message: 'At least one field must be provided for update'
-  });
+  static readonly updateProfileSchema = z
+    .object({
+      firstName: this.optionalNameSchema,
+      lastName: this.optionalNameSchema,
+      email: this.emailSchema.optional(),
+    })
+    .refine(
+      (data) => {
+        // At least one field must be provided
+        return (
+          data.firstName !== undefined ||
+          data.lastName !== undefined ||
+          data.email !== undefined
+        );
+      },
+      {
+        message: "At least one field must be provided for update",
+      }
+    );
 
   /**
    * Validate email format
@@ -162,10 +181,10 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => err.message)
+          errors: error.errors.map((err) => err.message),
         };
       }
-      return { isValid: false, errors: ['Invalid password'] };
+      return { isValid: false, errors: ["Invalid password"] };
     }
   }
 
@@ -177,8 +196,8 @@ export class ValidationUtils {
   static sanitizeInput(input: string): string {
     return input
       .trim()
-      .replace(/[<>]/g, '') // Remove potential HTML tags
-      .replace(/['"]/g, '') // Remove quotes to prevent injection
+      .replace(/[<>]/g, "") // Remove potential HTML tags
+      .replace(/['"]/g, "") // Remove quotes to prevent injection
       .substring(0, 1000); // Limit length
   }
 
@@ -198,18 +217,24 @@ export class ValidationUtils {
         isValid: true,
         data: {
           ...validatedData,
-          firstName: validatedData.firstName ? this.sanitizeInput(validatedData.firstName) : undefined,
-          lastName: validatedData.lastName ? this.sanitizeInput(validatedData.lastName) : undefined
-        }
+          firstName: validatedData.firstName
+            ? this.sanitizeInput(validatedData.firstName)
+            : undefined,
+          lastName: validatedData.lastName
+            ? this.sanitizeInput(validatedData.lastName)
+            : undefined,
+        },
       };
     } catch (error) {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+          errors: error.errors.map(
+            (err) => `${err.path.join(".")}: ${err.message}`
+          ),
         };
       }
-      return { isValid: false, errors: ['Validation failed'] };
+      return { isValid: false, errors: ["Validation failed"] };
     }
   }
 
@@ -230,10 +255,12 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+          errors: error.errors.map(
+            (err) => `${err.path.join(".")}: ${err.message}`
+          ),
         };
       }
-      return { isValid: false, errors: ['Validation failed'] };
+      return { isValid: false, errors: ["Validation failed"] };
     }
   }
 
@@ -254,10 +281,12 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+          errors: error.errors.map(
+            (err) => `${err.path.join(".")}: ${err.message}`
+          ),
         };
       }
-      return { isValid: false, errors: ['Validation failed'] };
+      return { isValid: false, errors: ["Validation failed"] };
     }
   }
 
@@ -278,10 +307,12 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+          errors: error.errors.map(
+            (err) => `${err.path.join(".")}: ${err.message}`
+          ),
         };
       }
-      return { isValid: false, errors: ['Validation failed'] };
+      return { isValid: false, errors: ["Validation failed"] };
     }
   }
 
@@ -302,10 +333,12 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+          errors: error.errors.map(
+            (err) => `${err.path.join(".")}: ${err.message}`
+          ),
         };
       }
-      return { isValid: false, errors: ['Validation failed'] };
+      return { isValid: false, errors: ["Validation failed"] };
     }
   }
 
@@ -326,10 +359,12 @@ export class ValidationUtils {
       if (error instanceof z.ZodError) {
         return {
           isValid: false,
-          errors: error.errors.map(err => `${err.path.join('.')}: ${err.message}`)
+          errors: error.errors.map(
+            (err) => `${err.path.join(".")}: ${err.message}`
+          ),
         };
       }
-      return { isValid: false, errors: ['Validation failed'] };
+      return { isValid: false, errors: ["Validation failed"] };
     }
   }
 
@@ -343,35 +378,35 @@ export class ValidationUtils {
     patterns: string[];
   } {
     const patterns: string[] = [];
-    
+
     // Check for common patterns
     if (/123456|password|qwerty|abc123|admin|letmein/i.test(password)) {
-      patterns.push('Contains common password patterns');
+      patterns.push("Contains common password patterns");
     }
-    
+
     if (/(.)\1{3,}/.test(password)) {
-      patterns.push('Contains repeated characters');
+      patterns.push("Contains repeated characters");
     }
-    
+
     if (/^[a-zA-Z]+$/.test(password)) {
-      patterns.push('Contains only letters');
+      patterns.push("Contains only letters");
     }
-    
+
     if (/^\d+$/.test(password)) {
-      patterns.push('Contains only numbers');
+      patterns.push("Contains only numbers");
     }
-    
+
     if (/^[a-z]+$/.test(password)) {
-      patterns.push('Contains only lowercase letters');
+      patterns.push("Contains only lowercase letters");
     }
-    
+
     if (/^[A-Z]+$/.test(password)) {
-      patterns.push('Contains only uppercase letters');
+      patterns.push("Contains only uppercase letters");
     }
 
     return {
       hasCommonPatterns: patterns.length > 0,
-      patterns
+      patterns,
     };
   }
 
@@ -381,9 +416,12 @@ export class ValidationUtils {
    * @param maxSize - Maximum size in bytes (default: 1MB)
    * @returns boolean - True if size is valid
    */
-  static validateRequestSize(body: any, maxSize: number = 1024 * 1024): boolean {
+  static validateRequestSize(
+    body: any,
+    maxSize: number = 1024 * 1024
+  ): boolean {
     const bodyString = JSON.stringify(body);
-    const sizeInBytes = Buffer.byteLength(bodyString, 'utf8');
+    const sizeInBytes = Buffer.byteLength(bodyString, "utf8");
     return sizeInBytes <= maxSize;
   }
 
