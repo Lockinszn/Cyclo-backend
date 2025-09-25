@@ -6,7 +6,7 @@ import commentRoutes from './comments';
 import bookmarkRoutes from './bookmarks';
 import notificationRoutes from './notifications';
 
-const router = Router();
+const router:Router = Router();
 
 // API Routes
 router.use('/auth', authRoutes);
