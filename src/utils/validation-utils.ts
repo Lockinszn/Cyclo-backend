@@ -14,8 +14,7 @@ export class ValidationUtils {
    * Email validation schema
    */
   static readonly emailSchema = z
-    .email({})
-
+    .email({ message: "Invalid email format" })
     .min(1, "Email is required")
     .max(255, "Email must be less than 255 characters")
     .toLowerCase()
@@ -79,8 +78,8 @@ export class ValidationUtils {
   static readonly registerSchema = z.object({
     email: this.emailSchema,
     password: this.passwordSchema,
-    firstName: this.optionalNameSchema,
-    lastName: this.optionalNameSchema,
+    firstName: this.nameSchema,
+    lastName: this.nameSchema,
   });
 
   /**

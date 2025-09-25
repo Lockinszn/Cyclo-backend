@@ -386,7 +386,7 @@ export class AuthController {
         return;
       }
 
-      const { email } = validation.data;
+      const email = validation.data;
 
       // Call auth service
       const result = await AuthService.resendVerification(email);
@@ -591,11 +591,11 @@ export class AuthController {
         m.CryptoUtils.generateSecureToken()
       );
 
-      // Temporarily store reset token (in production, this should be in database)
+      //TODO: Temporarily store reset token (in production, this should be in database)
       // For now, we'll use the reset password method directly
       const resetResult = await AuthService.resetPassword({
         token: resetToken,
-        newPassword: newPassword,
+        password: newPassword,
       });
 
       // Since we can't easily integrate with the existing reset flow,

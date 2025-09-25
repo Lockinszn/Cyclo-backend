@@ -183,7 +183,10 @@ export interface ValidationError {
 export interface ServiceResponse<T = any> {
   success: boolean;
   data?: T;
-  error?: string;
+  error?: {
+    message: string;
+    code?: string;
+  };
   statusCode?: number;
 }
 

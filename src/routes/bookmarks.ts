@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/v1/bookmarks - Get user bookmarks
 router.get("/", (req: Request, res: Response) => {

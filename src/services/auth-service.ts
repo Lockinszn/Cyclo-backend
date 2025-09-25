@@ -210,16 +210,9 @@ export class AuthService {
         .where(eq(users.id, user.id));
 
       // Generate tokens
-      const accessToken = JWTUtils.generateAccessToken({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      });
+      const accessToken = JWTUtils.generateAccessToken(user.id, user.email);
 
-      const refreshToken = JWTUtils.generateRefreshToken({
-        userId: user.id,
-        email: user.email,
-      });
+      const refreshToken = JWTUtils.generateRefreshToken(user.id, user.email);
 
       // Create user profile response
       const userProfile: UserProfile = {
@@ -410,7 +403,7 @@ export class AuthService {
       const account = await db.query.accounts.findFirst({
         where: and(
           eq(accounts.passwordResetToken, data.token),
-          lt(new Date(), accounts.passwordResetExpires!)
+          lt(accounts.passwordResetExpires, new Date())
         ),
         with: {
           user: true,
