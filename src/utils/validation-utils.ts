@@ -215,11 +215,8 @@ export class ValidationUtils {
         isValid: true,
         data: {
           ...validatedData,
-          firstName: validatedData.firstName
-            ? this.sanitizeInput(validatedData.firstName)
-            : undefined,
-          lastName: validatedData.lastName
-            ? this.sanitizeInput(validatedData.lastName)
+          fullName: validatedData.fullName
+            ? this.sanitizeInput(validatedData.fullName)
             : undefined,
         },
       };

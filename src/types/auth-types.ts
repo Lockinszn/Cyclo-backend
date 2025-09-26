@@ -31,14 +31,10 @@ export interface RefreshTokenRequest {
 
 // Authentication response interfaces
 export interface AuthResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    user: User;
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  };
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 export interface LoginResponse {
@@ -149,6 +145,7 @@ export interface ValidationError {
 // Service response interface
 export interface ServiceResponse<T = any> {
   success: boolean;
+  message?: string;
   data?: T;
   error?: {
     message: string;
