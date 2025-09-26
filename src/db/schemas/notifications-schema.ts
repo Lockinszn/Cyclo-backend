@@ -9,6 +9,7 @@ import {
   json,
   index,
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { users } from "./users-schema";
 
@@ -215,3 +216,31 @@ export type NotificationSettings = typeof notificationSettings.$inferSelect;
 export type NewNotificationSettings = typeof notificationSettings.$inferInsert;
 export type NotificationQueue = typeof notificationQueue.$inferSelect;
 export type NewNotificationQueue = typeof notificationQueue.$inferInsert;
+
+// Relations
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  recipient: one(users, {
+    fields: [notifications.recipientId],
+    references: [users.id],
+    relationName: "notificationRecipient",
+  }),
+  sender: one(users, {
+    fields: [notifications.senderId],
+    references: [users.id],
+    relationName: "notificationSender",
+  }),
+}));
+
+export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [notificationSettings.userId],
+    references: [users.id],
+  }),
+}));
+
+export const notificationQueueRelations = relations(notificationQueue, ({ one }) => ({
+  notification: one(notifications, {
+    fields: [notificationQueue.notificationId],
+    references: [notifications.id],
+  }),
+}));

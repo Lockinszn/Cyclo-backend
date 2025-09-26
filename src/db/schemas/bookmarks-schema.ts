@@ -1,4 +1,5 @@
 import { mysqlTable, varchar, text, timestamp, boolean, mysqlEnum, int, index } from 'drizzle-orm/mysql-core';
+import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { users } from './users-schema';
 import { posts } from './posts-schema';
@@ -121,3 +122,40 @@ export type UserActivity = typeof userActivity.$inferSelect;
 export type NewUserActivity = typeof userActivity.$inferInsert;
 export type UserPreferences = typeof userPreferences.$inferSelect;
 export type NewUserPreferences = typeof userPreferences.$inferInsert;
+
+// Relations
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [bookmarks.userId],
+    references: [users.id],
+  }),
+  post: one(posts, {
+    fields: [bookmarks.postId],
+    references: [posts.id],
+  }),
+}));
+
+export const postSharesRelations = relations(postShares, ({ one }) => ({
+  post: one(posts, {
+    fields: [postShares.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postShares.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userActivityRelations = relations(userActivity, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivity.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userPreferences.userId],
+    references: [users.id],
+  }),
+}));

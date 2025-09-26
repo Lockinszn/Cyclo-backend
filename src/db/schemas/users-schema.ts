@@ -8,7 +8,22 @@ import {
   int,
   index,
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
+import { postLikes, postRevisions, posts, postViews } from "./posts-schema";
+import {
+  commentFlags,
+  commentLikes,
+  commentMentions,
+  comments,
+} from "./comments-schema";
+import {
+  bookmarks,
+  postShares,
+  userActivity,
+  userPreferences,
+} from "./bookmarks-schema";
+import { notifications } from "./notifications-schema";
 
 export const users = mysqlTable(
   "users",
@@ -125,3 +140,72 @@ export type NewUser = typeof users.$inferInsert & {
 };
 export type UserFollow = typeof userFollows.$inferSelect;
 export type NewUserFollow = typeof userFollows.$inferInsert;
+
+// Relations
+export const usersRelations = relations(users, ({ one, many }) => ({
+  // One-to-one relation with accounts
+  account: one(accounts, {
+    fields: [users.id],
+    references: [accounts.userId],
+  }),
+
+  // One-to-many relations
+  posts: many(posts),
+  comments: many(comments),
+  bookmarks: many(bookmarks),
+  postLikes: many(postLikes),
+  commentLikes: many(commentLikes),
+  postViews: many(postViews),
+  postShares: many(postShares),
+  userActivity: many(userActivity),
+
+  // Notifications
+  sentNotifications: many(notifications, { relationName: "sender" }),
+  receivedNotifications: many(notifications, { relationName: "recipient" }),
+
+  // User preferences
+  preferences: one(userPreferences, {
+    fields: [users.id],
+    references: [userPreferences.userId],
+  }),
+
+  // Following relationships
+  followers: many(userFollows, { relationName: "following" }),
+  following: many(userFollows, { relationName: "follower" }),
+
+  // Comment mentions
+  commentMentions: many(commentMentions, { relationName: "mentionedUser" }),
+  commentMentionsMade: many(commentMentions, {
+    relationName: "mentionedByUser",
+  }),
+
+  // Comment flags
+  commentFlags: many(commentFlags, { relationName: "reporter" }),
+  commentFlagsReviewed: many(commentFlags, { relationName: "reviewer" }),
+
+  // Post revisions
+  postRevisions: many(postRevisions),
+
+  // Comment moderation
+  moderatedComments: many(comments, { relationName: "moderator" }),
+}));
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userFollowsRelations = relations(userFollows, ({ one }) => ({
+  follower: one(users, {
+    fields: [userFollows.followerId],
+    references: [users.id],
+    relationName: "follower",
+  }),
+  following: one(users, {
+    fields: [userFollows.followingId],
+    references: [users.id],
+    relationName: "following",
+  }),
+}));

@@ -8,6 +8,7 @@ import {
   int,
   index,
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { users } from "./users-schema";
 import { posts } from "./posts-schema";
@@ -183,35 +184,6 @@ export const commentFlags = mysqlTable(
   ]
 );
 
-export const commentRevisions = mysqlTable(
-  "comment_revisions",
-  {
-    id: varchar("id", { length: 128 })
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    commentId: varchar("comment_id", { length: 128 })
-      .notNull()
-      .references(() => comments.id, { onDelete: "cascade" }),
-    content: text("content").notNull(),
-    revisionNumber: int("revision_number").notNull(),
-    editReason: varchar("edit_reason", { length: 255 }),
-    createdAt: timestamp("created_at").defaultNow(),
-  },
-  (table) => [
-    // Index for getting revisions of a comment
-    index("comment_revisions_comment_id_idx").on(table.commentId),
-    // Index for revision ordering
-    index("comment_revisions_revision_number_idx").on(table.revisionNumber),
-    // Index for revision timestamps
-    index("comment_revisions_created_at_idx").on(table.createdAt),
-    // Composite index for comment revision history
-    index("comment_revisions_comment_revision_idx").on(
-      table.commentId,
-      table.revisionNumber
-    ),
-  ]
-);
-
 // Mentions in comments
 export const commentMentions = mysqlTable(
   "comment_mentions",
@@ -259,7 +231,92 @@ export type CommentLike = typeof commentLikes.$inferSelect;
 export type NewCommentLike = typeof commentLikes.$inferInsert;
 export type CommentFlag = typeof commentFlags.$inferSelect;
 export type NewCommentFlag = typeof commentFlags.$inferInsert;
-export type CommentRevision = typeof commentRevisions.$inferSelect;
-export type NewCommentRevision = typeof commentRevisions.$inferInsert;
 export type CommentMention = typeof commentMentions.$inferSelect;
 export type NewCommentMention = typeof commentMentions.$inferInsert;
+
+// Relations
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  // Author relationship
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+
+  // Post relationship
+  post: one(posts, {
+    fields: [comments.postId],
+    references: [posts.id],
+  }),
+
+  // Parent comment relationship (for replies)
+  parent: one(comments, {
+    fields: [comments.parentId],
+    references: [comments.id],
+    relationName: "parentChild",
+  }),
+
+  // Child comments (replies)
+  children: many(comments, {
+    relationName: "parentChild",
+  }),
+
+  // Moderator relationship
+  moderator: one(users, {
+    fields: [comments.moderatedBy],
+    references: [users.id],
+    relationName: "moderator",
+  }),
+
+  // One-to-many relationships
+  commentLikes: many(commentLikes),
+  commentFlags: many(commentFlags),
+  commentMentions: many(commentMentions),
+}));
+
+export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
+  comment: one(comments, {
+    fields: [commentLikes.commentId],
+    references: [comments.id],
+  }),
+  user: one(users, {
+    fields: [commentLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const commentFlagsRelations = relations(commentFlags, ({ one }) => ({
+  comment: one(comments, {
+    fields: [commentFlags.commentId],
+    references: [comments.id],
+  }),
+  reporter: one(users, {
+    fields: [commentFlags.reporterId],
+    references: [users.id],
+    relationName: "reporter",
+  }),
+  reviewer: one(users, {
+    fields: [commentFlags.reviewedBy],
+    references: [users.id],
+    relationName: "reviewer",
+  }),
+}));
+
+export const commentMentionsRelations = relations(
+  commentMentions,
+  ({ one }) => ({
+    comment: one(comments, {
+      fields: [commentMentions.commentId],
+      references: [comments.id],
+    }),
+    mentionedUser: one(users, {
+      fields: [commentMentions.mentionedUserId],
+      references: [users.id],
+      relationName: "mentionedUser",
+    }),
+    mentionedByUser: one(users, {
+      fields: [commentMentions.mentionedByUserId],
+      references: [users.id],
+      relationName: "mentionedByUser",
+    }),
+  })
+);

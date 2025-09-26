@@ -1,36 +1,61 @@
-import { mysqlTable, varchar, text, timestamp, boolean, mysqlEnum, int, json, index } from 'drizzle-orm/mysql-core';
-import { createId } from '@paralleldrive/cuid2';
-import { users } from './users-schema';
+import {
+  mysqlTable,
+  varchar,
+  text,
+  timestamp,
+  boolean,
+  mysqlEnum,
+  int,
+  json,
+  index,
+} from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { users } from "./users-schema";
+import { comments } from "./comments-schema";
+import { bookmarks, postShares } from "./bookmarks-schema";
 
-export const categories = mysqlTable('categories', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(() => createId()),
-  name: varchar('name', { length: 100 }).notNull().unique(),
-  slug: varchar('slug', { length: 100 }).notNull().unique(),
-  description: text('description'),
-  isActive: boolean('is_active').default(true),
-  postsCount: int('posts_count').default(0),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
-}, (table) => ([
-  // Index for active categories
-  index('categories_is_active_idx').on(table.isActive),
-  // Index for category popularity
-  index('categories_posts_count_idx').on(table.postsCount),
-]));
+export const categories = mysqlTable(
+  "categories",
+  {
+    id: varchar("id", { length: 128 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    name: varchar("name", { length: 100 }).notNull().unique(),
+    slug: varchar("slug", { length: 100 }).notNull().unique(),
+    description: text("description"),
+    isActive: boolean("is_active").default(true),
+    postsCount: int("posts_count").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+  },
+  (table) => [
+    // Index for active categories
+    index("categories_is_active_idx").on(table.isActive),
+    // Index for category popularity
+    index("categories_posts_count_idx").on(table.postsCount),
+  ]
+);
 
-export const tags = mysqlTable('tags', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(() => createId()),
-  name: varchar('name', { length: 50 }).notNull().unique(),
-  slug: varchar('slug', { length: 50 }).notNull().unique(),
-  description: text('description'),
-  postsCount: int('posts_count').default(0),
-  createdAt: timestamp('created_at').defaultNow(),
-}, (table) => ([
-  // Index for tag popularity
-  index('tags_posts_count_idx').on(table.postsCount),
-  // Index for tag creation date
-  index('tags_created_at_idx').on(table.createdAt),
-]));
+export const tags = mysqlTable(
+  "tags",
+  {
+    id: varchar("id", { length: 128 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    name: varchar("name", { length: 50 }).notNull().unique(),
+    slug: varchar("slug", { length: 50 }).notNull().unique(),
+    description: text("description"),
+    postsCount: int("posts_count").default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // Index for tag popularity
+    index("tags_posts_count_idx").on(table.postsCount),
+    // Index for tag creation date
+    index("tags_created_at_idx").on(table.createdAt),
+  ]
+);
 
 export const posts = mysqlTable(
   "posts",
@@ -94,7 +119,7 @@ export const posts = mysqlTable(
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
   },
-  (table) => ([
+  (table) => [
     index("posts_title_idx").on(table.title),
     index("posts_slug_idx").on(table.slug),
 
@@ -121,97 +146,131 @@ export const posts = mysqlTable(
     // Index for post creation date
     index("posts_created_at_idx").on(table.createdAt),
     // Composite indexes for common queries
-    index("posts_status_visibility_idx").on(
-      table.status,
-      table.visibility
-    ),
-    index("posts_author_status_idx").on(
-      table.authorId,
-      table.status
-    ),
-    index("posts_category_status_idx").on(
-      table.categoryId,
-      table.status
-    ),
+    index("posts_status_visibility_idx").on(table.status, table.visibility),
+    index("posts_author_status_idx").on(table.authorId, table.status),
+    index("posts_category_status_idx").on(table.categoryId, table.status),
     index("posts_published_featured_idx").on(
       table.publishedAt,
       table.isFeatured
     ),
-  ])
+  ]
 );
 
-export const postTags = mysqlTable('post_tags', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(() => createId()),
-  postId: varchar('post_id', { length: 128 }).notNull().references(() => posts.id, { onDelete: 'cascade' }),
-  tagId: varchar('tag_id', { length: 128 }).notNull().references(() => tags.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow(),
-}, (table) => ([
-  // Index for getting tags of a post
-  index('post_tags_post_id_idx').on(table.postId),
-  // Index for getting posts with a specific tag
-  index('post_tags_tag_id_idx').on(table.tagId),
-  // Composite index for unique post-tag relationships
-  index('post_tags_post_tag_idx').on(table.postId, table.tagId),
-]));
+export const postTags = mysqlTable(
+  "post_tags",
+  {
+    id: varchar("id", { length: 128 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    postId: varchar("post_id", { length: 128 })
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    tagId: varchar("tag_id", { length: 128 })
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // Index for getting tags of a post
+    index("post_tags_post_id_idx").on(table.postId),
+    // Index for getting posts with a specific tag
+    index("post_tags_tag_id_idx").on(table.tagId),
+    // Composite index for unique post-tag relationships
+    index("post_tags_post_tag_idx").on(table.postId, table.tagId),
+  ]
+);
 
-export const postViews = mysqlTable('post_views', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(() => createId()),
-  postId: varchar('post_id', { length: 128 }).notNull().references(() => posts.id, { onDelete: 'cascade' }),
-  userId: varchar('user_id', { length: 128 }).references(() => users.id, { onDelete: 'set null' }),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  userAgent: text('user_agent'),
-  referrer: varchar('referrer', { length: 500 }),
-  viewedAt: timestamp('viewed_at').defaultNow(),
-}, (table) => ([
-  // Index for post view analytics
-  index('post_views_post_id_idx').on(table.postId),
-  // Index for user view history
-  index('post_views_user_id_idx').on(table.userId),
-  // Index for view timestamps (analytics)
-  index('post_views_viewed_at_idx').on(table.viewedAt),
-  // Index for IP-based analytics
-  index('post_views_ip_address_idx').on(table.ipAddress),
-  // Composite index for unique views per user per post
-  index('post_views_post_user_idx').on(table.postId, table.userId),
-]));
+export const postViews = mysqlTable(
+  "post_views",
+  {
+    id: varchar("id", { length: 128 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    postId: varchar("post_id", { length: 128 })
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 128 }).references(() => users.id, {
+      onDelete: "set null",
+    }),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: text("user_agent"),
+    referrer: varchar("referrer", { length: 500 }),
+    viewedAt: timestamp("viewed_at").defaultNow(),
+  },
+  (table) => [
+    // Index for post view analytics
+    index("post_views_post_id_idx").on(table.postId),
+    // Index for user view history
+    index("post_views_user_id_idx").on(table.userId),
+    // Index for view timestamps (analytics)
+    index("post_views_viewed_at_idx").on(table.viewedAt),
+    // Index for IP-based analytics
+    index("post_views_ip_address_idx").on(table.ipAddress),
+    // Composite index for unique views per user per post
+    index("post_views_post_user_idx").on(table.postId, table.userId),
+  ]
+);
 
-export const postLikes = mysqlTable('post_likes', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(() => createId()),
-  postId: varchar('post_id', { length: 128 }).notNull().references(() => posts.id, { onDelete: 'cascade' }),
-  userId: varchar('user_id', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow(),
-}, (table) => ([
-  // Index for getting likes of a post
-  index('post_likes_post_id_idx').on(table.postId),
-  // Index for getting posts liked by a user
-  index('post_likes_user_id_idx').on(table.userId),
-  // Composite index for checking if user liked a post
-  index('post_likes_post_user_idx').on(table.postId, table.userId),
-  // Index for recent likes (activity feeds)
-  index('post_likes_created_at_idx').on(table.createdAt),
-]));
+export const postLikes = mysqlTable(
+  "post_likes",
+  {
+    id: varchar("id", { length: 128 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    postId: varchar("post_id", { length: 128 })
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    userId: varchar("user_id", { length: 128 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // Index for getting likes of a post
+    index("post_likes_post_id_idx").on(table.postId),
+    // Index for getting posts liked by a user
+    index("post_likes_user_id_idx").on(table.userId),
+    // Composite index for checking if user liked a post
+    index("post_likes_post_user_idx").on(table.postId, table.userId),
+    // Index for recent likes (activity feeds)
+    index("post_likes_created_at_idx").on(table.createdAt),
+  ]
+);
 
-export const postRevisions = mysqlTable('post_revisions', {
-  id: varchar('id', { length: 128 }).primaryKey().$defaultFn(() => createId()),
-  postId: varchar('post_id', { length: 128 }).notNull().references(() => posts.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }).notNull(),
-  content: text('content').notNull(),
-  excerpt: text('excerpt'),
-  revisionNumber: int('revision_number').notNull(),
-  createdBy: varchar('created_by', { length: 128 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow(),
-}, (table) => ([
-  // Index for getting revisions of a post
-  index('post_revisions_post_id_idx').on(table.postId),
-  // Index for revision history ordering
-  index('post_revisions_revision_number_idx').on(table.revisionNumber),
-  // Index for revisions by author
-  index('post_revisions_created_by_idx').on(table.createdBy),
-  // Index for revision timestamps
-  index('post_revisions_created_at_idx').on(table.createdAt),
-  // Composite index for post revision ordering
-  index('post_revisions_post_revision_idx').on(table.postId, table.revisionNumber),
-]));
+export const postRevisions = mysqlTable(
+  "post_revisions",
+  {
+    id: varchar("id", { length: 128 })
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    postId: varchar("post_id", { length: 128 })
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 255 }).notNull(),
+    content: text("content").notNull(),
+    excerpt: text("excerpt"),
+    revisionNumber: int("revision_number").notNull(),
+    createdBy: varchar("created_by", { length: 128 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    // Index for getting revisions of a post
+    index("post_revisions_post_id_idx").on(table.postId),
+    // Index for revision history ordering
+    index("post_revisions_revision_number_idx").on(table.revisionNumber),
+    // Index for revisions by author
+    index("post_revisions_created_by_idx").on(table.createdBy),
+    // Index for revision timestamps
+    index("post_revisions_created_at_idx").on(table.createdAt),
+    // Composite index for post revision ordering
+    index("post_revisions_post_revision_idx").on(
+      table.postId,
+      table.revisionNumber
+    ),
+  ]
+);
 
 // Type exports
 export type Category = typeof categories.$inferSelect;
@@ -228,3 +287,79 @@ export type PostLike = typeof postLikes.$inferSelect;
 export type NewPostLike = typeof postLikes.$inferInsert;
 export type PostRevision = typeof postRevisions.$inferSelect;
 export type NewPostRevision = typeof postRevisions.$inferInsert;
+
+// Relations
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  postTags: many(postTags),
+}));
+
+export const postsRelations = relations(posts, ({ one, many }) => ({
+  // Author relationship
+  author: one(users, {
+    fields: [posts.authorId],
+    references: [users.id],
+  }),
+
+  // Category relationship
+  category: one(categories, {
+    fields: [posts.categoryId],
+    references: [categories.id],
+  }),
+
+  // One-to-many relationships
+  postTags: many(postTags),
+  postViews: many(postViews),
+  postLikes: many(postLikes),
+  postRevisions: many(postRevisions),
+  comments: many(comments),
+  bookmarks: many(bookmarks),
+  postShares: many(postShares),
+}));
+
+export const postTagsRelations = relations(postTags, ({ one }) => ({
+  post: one(posts, {
+    fields: [postTags.postId],
+    references: [posts.id],
+  }),
+  tag: one(tags, {
+    fields: [postTags.tagId],
+    references: [tags.id],
+  }),
+}));
+
+export const postViewsRelations = relations(postViews, ({ one }) => ({
+  post: one(posts, {
+    fields: [postViews.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postViews.userId],
+    references: [users.id],
+  }),
+}));
+
+export const postLikesRelations = relations(postLikes, ({ one }) => ({
+  post: one(posts, {
+    fields: [postLikes.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const postRevisionsRelations = relations(postRevisions, ({ one }) => ({
+  post: one(posts, {
+    fields: [postRevisions.postId],
+    references: [posts.id],
+  }),
+  createdBy: one(users, {
+    fields: [postRevisions.createdBy],
+    references: [users.id],
+  }),
+}));
