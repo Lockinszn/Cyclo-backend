@@ -10,7 +10,6 @@ import {
   RefreshTokenRequest,
   AuthResponse,
   ServiceResponse,
-  User,
   UserProfile,
 } from "@/types/auth-types";
 import { CryptoUtils } from "@/utils/crypto-utils";
@@ -73,12 +72,13 @@ export class AuthService {
             email: data.email,
             username: data.username.toLowerCase(),
             displayUsername: data.username,
-            firstName: data.firstName,
-            lastName: data.lastName,
+            fullName: data.fullName,
             isEmailVerified: false,
           })
-          .returning();
-
+          .$returningId();
+        if (!newUser) {
+          throw new Error("Failed to create user");
+        }
         // Create account
         await tx.insert(accounts).values({
           userId: newUser.id,
@@ -86,28 +86,29 @@ export class AuthService {
           emailVerificationToken,
           emailVerificationExpires,
         });
-
-        return newUser;
+        const user = await tx.query.users.findFirst({
+          where: eq(users.id, newUser.id),
+        });
+        if (!user) {
+          throw new Error("Failed to create user");
+        }
+        return user;
       });
 
       // Send verification email
-      await EmailTemplates.sendVerificationEmail(
-        data.email,
-        data.firstName || data.username,
-        emailVerificationToken
-      );
+      await EmailTemplates.sendEmailVerification({
+        firstName: data.fullName.split(" ")[0] || "",
+        verificationUrl: `${process.env.FRONTEND_URL}/verify-email/${emailVerificationToken}`,
+        email: data.email,
+      });
 
       // Generate tokens
-      const accessToken = JWTUtils.generateAccessToken({
-        userId: result.id,
-        email: result.email,
-        role: result.role,
-      });
+      const accessToken = JWTUtils.generateAccessToken(result.id, result.email);
 
-      const refreshToken = JWTUtils.generateRefreshToken({
-        userId: result.id,
-        email: result.email,
-      });
+      const refreshToken = JWTUtils.generateRefreshToken(
+        result.id,
+        result.email
+      );
 
       // Create user profile response
       const userProfile: UserProfile = {
@@ -115,8 +116,7 @@ export class AuthService {
         email: result.email,
         username: result.username,
         displayUsername: result.displayUsername,
-        firstName: result.firstName,
-        lastName: result.lastName,
+        fullName: result.fullName,
         bio: result.bio,
         avatar: result.avatar,
         website: result.website,

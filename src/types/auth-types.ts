@@ -1,36 +1,10 @@
 import { type Request } from "express";
 
-// User-related interfaces
-export interface User {
-  id: string;
-  email: string;
-  password: string;
-  firstName?: string;
-  lastName?: string;
-  isEmailVerified: boolean;
-  emailVerificationToken?: string;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  isEmailVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 // Authentication request interfaces
 export interface RegisterRequest {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
+  fullName: string;
 }
 
 export interface LoginRequest {

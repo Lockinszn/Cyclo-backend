@@ -465,7 +465,6 @@ Need help? Contact us at support@cyclo.com`,
    * Send email verification
    */
   static async sendEmailVerification(
-    to: string,
     data: EmailVerificationData
   ): Promise<void> {
     try {
@@ -474,7 +473,7 @@ Need help? Contact us at support@cyclo.com`,
 
       await resend.emails.send({
         from: process.env.FROM_EMAIL || "noreply@cyclo.com",
-        to,
+        to: data.email,
         subject: template.subject,
         html: template.html,
         text: template.text,
