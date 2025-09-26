@@ -16,6 +16,7 @@ import { JWTUtils } from "@/utils/jwt-utils";
 import { EmailTemplates } from "@/utils/email-templates";
 import ms from "ms";
 import { init } from "@paralleldrive/cuid2";
+import { config } from "@/config";
 export class AuthService {
   /**
    * Generate a username from full name
@@ -148,11 +149,12 @@ export class AuthService {
       const user = await db.query.users.findFirst({
         where: eq(users.email, data.email),
         with: {
-          accounts: true,
+          account: true,
+          bookmarks: true,
         },
       });
 
-      if (!user || !user.accounts) {
+      if (!user || !user.account) {
         return {
           success: false,
           error: {
@@ -176,7 +178,8 @@ export class AuthService {
       // Verify password
       const isValidPassword = await CryptoUtils.comparePassword(
         data.password,
-        user.accounts.password
+        //@ts-expect-error
+        user.account?.password
       );
 
       if (!isValidPassword) {
@@ -200,34 +203,13 @@ export class AuthService {
 
       const refreshToken = JWTUtils.generateRefreshToken(user.id, user.email);
 
-      // Create user profile response
-      const userProfile: User = {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        displayUsername: user.displayUsername,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        bio: user.bio,
-        avatar: user.avatar,
-        website: user.website,
-        location: user.location,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-        postsCount: user.postsCount,
-        followersCount: user.followersCount,
-        followingCount: user.followingCount,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
-
       return {
         success: true,
         data: {
-          user: userProfile,
+          user,
           accessToken,
           refreshToken,
-          expiresIn: 15 * 60, // 15 minutes
+          expiresIn: ms(JWTUtils.ACCESS_TOKEN_EXPIRY) / 1000, // 15 minutes
         },
       };
     } catch (error) {
@@ -288,17 +270,13 @@ export class AuthService {
       }
 
       // Generate new access token
-      const accessToken = JWTUtils.generateAccessToken({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      });
+      const accessToken = JWTUtils.generateAccessToken(user.id, user.email);
 
       return {
         success: true,
         data: {
           accessToken,
-          expiresIn: 15 * 60, // 15 minutes
+          expiresIn: ms(JWTUtils.ACCESS_TOKEN_EXPIRY) / 1000, // 15 minutes
         },
       };
     } catch (error) {
@@ -324,12 +302,12 @@ export class AuthService {
       const user = await db.query.users.findFirst({
         where: eq(users.email, data.email),
         with: {
-          accounts: true,
+          account: true,
         },
       });
 
       // Always return success to prevent email enumeration
-      if (!user || !user.accounts) {
+      if (!user || !user.account) {
         return {
           success: true,
           data: {
@@ -353,11 +331,12 @@ export class AuthService {
         .where(eq(accounts.userId, user.id));
 
       // Send password reset email
-      await EmailTemplates.sendPasswordResetEmail(
-        user.email,
-        user.firstName || user.username,
-        resetToken
-      );
+      await EmailTemplates.sendPasswordReset(user.email, {
+        email: user.email,
+        firstName: user.fullName || user.displayUsername,
+        resetUrl: `${config.FRONTEND_URL}/auth/password-reset?token=${resetToken}`,
+        expiresIn: JWTUtils.ACCESS_TOKEN_EXPIRY,
+      });
 
       return {
         success: true,
@@ -418,7 +397,7 @@ export class AuthService {
       }
 
       // Hash new password
-      const hashedPassword = await CryptoUtils.hashPassword(data.newPassword);
+      const hashedPassword = await CryptoUtils.hashPassword(data.password);
 
       // Update password and clear reset token
       await db
@@ -431,9 +410,9 @@ export class AuthService {
         .where(eq(accounts.id, account.id));
 
       // Send password changed confirmation email
-      await EmailTemplates.sendPasswordChangedEmail(
+      await EmailTemplates.sendPasswordChangedConfirmation(
         account.user.email,
-        account.user.firstName || account.user.username
+        account.user.fullName || account.user.displayUsername
       );
 
       return {
@@ -465,7 +444,7 @@ export class AuthService {
       const account = await db.query.accounts.findFirst({
         where: and(
           eq(accounts.emailVerificationToken, data.token),
-          lt(new Date(), accounts.emailVerificationExpires!)
+          lt(accounts.emailVerificationExpires!, new Date())
         ),
         with: {
           user: true,
@@ -512,7 +491,7 @@ export class AuthService {
       // Send welcome email
       await EmailTemplates.sendWelcomeEmail(
         account.user.email,
-        account.user.firstName || account.user.username
+        account.user.fullName || account.user.displayUsername
       );
 
       return {
@@ -544,11 +523,11 @@ export class AuthService {
       const user = await db.query.users.findFirst({
         where: eq(users.email, email),
         with: {
-          accounts: true,
+          account: true,
         },
       });
 
-      if (!user || !user.accounts) {
+      if (!user || !user.account) {
         return {
           success: true,
           data: {
@@ -585,11 +564,11 @@ export class AuthService {
         .where(eq(accounts.userId, user.id));
 
       // Send verification email
-      await EmailTemplates.sendVerificationEmail(
-        user.email,
-        user.firstName || user.username,
-        emailVerificationToken
-      );
+      await EmailTemplates.sendEmailVerification({
+        email: user.email,
+        firstName: user.fullName || user.displayUsername,
+        verificationUrl: `${config.FRONTEND_URL}/auth/verify-email?token=${emailVerificationToken}`,
+      });
 
       return {
         success: true,

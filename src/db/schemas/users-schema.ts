@@ -134,13 +134,6 @@ export const userFollows = mysqlTable(
   ]
 );
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert & {
-  password: string;
-};
-export type UserFollow = typeof userFollows.$inferSelect;
-export type NewUserFollow = typeof userFollows.$inferInsert;
-
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   // One-to-one relation with accounts
@@ -209,3 +202,13 @@ export const userFollowsRelations = relations(userFollows, ({ one }) => ({
     relationName: "following",
   }),
 }));
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert & {
+  password: string;
+};
+export type UserFollow = typeof userFollows.$inferSelect;
+export type NewUserFollow = typeof userFollows.$inferInsert;
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type NewUserPreferences = typeof userPreferences.$inferInsert;
+export type Account = typeof accounts.$inferSelect;
