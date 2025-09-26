@@ -5,7 +5,7 @@ import { JWTPayload, TokenType, BlacklistedToken } from "../types/auth-types";
  * JWT utilities for token generation, verification, and blacklist management
  */
 export class JWTUtils {
-  private static readonly ACCESS_TOKEN_EXPIRY = "15m";
+  static readonly ACCESS_TOKEN_EXPIRY = "15m";
   private static readonly REFRESH_TOKEN_EXPIRY = "7d";
   private static readonly EMAIL_TOKEN_EXPIRY = "24h";
   private static readonly PASSWORD_RESET_TOKEN_EXPIRY = "1h";

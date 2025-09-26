@@ -1,4 +1,4 @@
-import { type Request } from "express";
+import { type User } from "@/db/schemas";
 
 // Authentication request interfaces
 export interface RegisterRequest {
@@ -34,9 +34,10 @@ export interface AuthResponse {
   success: boolean;
   message: string;
   data?: {
-    user: UserProfile;
+    user: User;
     accessToken: string;
     refreshToken: string;
+    expiresIn: number;
   };
 }
 
@@ -44,9 +45,10 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data?: {
-    user: UserProfile;
+    user: User;
     accessToken: string;
     refreshToken: string;
+    expiresIn: number;
   };
 }
 
@@ -54,7 +56,7 @@ export interface RegisterResponse {
   success: boolean;
   message: string;
   data?: {
-    user: UserProfile;
+    user: User;
     message: string;
   };
 }
@@ -65,6 +67,7 @@ export interface RefreshTokenResponse {
   data?: {
     accessToken: string;
     refreshToken: string;
+    expiresIn: number;
   };
 }
 
@@ -93,16 +96,6 @@ export interface UserSession {
   sessionId: string;
   createdAt: Date;
   expiresAt: Date;
-}
-
-// Extended Express Request interface
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    isEmailVerified: boolean;
-    role: UserRole;
-  };
 }
 
 // Token blacklist interface

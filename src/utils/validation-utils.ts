@@ -78,8 +78,7 @@ export class ValidationUtils {
   static readonly registerSchema = z.object({
     email: this.emailSchema,
     password: this.passwordSchema,
-    firstName: this.nameSchema,
-    lastName: this.nameSchema,
+    fullName: this.nameSchema,
   });
 
   /**

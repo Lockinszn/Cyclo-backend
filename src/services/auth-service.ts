@@ -1,6 +1,6 @@
 import { eq, and, lt } from "drizzle-orm";
 import { db } from "@/db";
-import { users, accounts } from "@/db/schemas/users-schema";
+import { users, accounts, User } from "@/db/schemas/users-schema";
 import {
   RegisterRequest,
   LoginRequest,
@@ -10,13 +10,32 @@ import {
   RefreshTokenRequest,
   AuthResponse,
   ServiceResponse,
-  UserProfile,
 } from "@/types/auth-types";
 import { CryptoUtils } from "@/utils/crypto-utils";
 import { JWTUtils } from "@/utils/jwt-utils";
 import { EmailTemplates } from "@/utils/email-templates";
-
+import ms from "ms";
+import { init } from "@paralleldrive/cuid2";
 export class AuthService {
+  /**
+   * Generate a username from full name
+   */
+
+  static generateUsername(fullName: string): {
+    username: string;
+    displayUsername: string;
+  } {
+    const cuid = init({ length: 5 });
+    const username =
+      fullName
+        .replace(/\s+/g, "") // Remove spaces
+        .replace(/[^\w]+/g, "")
+        .slice(0, 10) + cuid(); // Remove special characters
+    return {
+      username: username.toLowerCase(),
+      displayUsername: username,
+    };
+  }
   /**
    * Register a new user
    */
@@ -39,21 +58,6 @@ export class AuthService {
         };
       }
 
-      // Check if username is taken
-      const existingUsername = await db.query.users.findFirst({
-        where: eq(users.username, data.username.toLowerCase()),
-      });
-
-      if (existingUsername) {
-        return {
-          success: false,
-          error: {
-            code: "USERNAME_TAKEN",
-            message: "Username is already taken",
-          },
-        };
-      }
-
       // Hash password
       const hashedPassword = await CryptoUtils.hashPassword(data.password);
 
@@ -62,7 +66,7 @@ export class AuthService {
       const emailVerificationExpires = new Date(
         Date.now() + 24 * 60 * 60 * 1000
       ); // 24 hours
-
+      const generateUsername = AuthService.generateUsername(data.fullName);
       // Create user and account in transaction
       const result = await db.transaction(async (tx) => {
         // Create user
@@ -70,9 +74,9 @@ export class AuthService {
           .insert(users)
           .values({
             email: data.email,
-            username: data.username.toLowerCase(),
-            displayUsername: data.username,
             fullName: data.fullName,
+            username: generateUsername.username,
+            displayUsername: generateUsername.displayUsername,
             isEmailVerified: false,
           })
           .$returningId();
@@ -111,32 +115,14 @@ export class AuthService {
       );
 
       // Create user profile response
-      const userProfile: UserProfile = {
-        id: result.id,
-        email: result.email,
-        username: result.username,
-        displayUsername: result.displayUsername,
-        fullName: result.fullName,
-        bio: result.bio,
-        avatar: result.avatar,
-        website: result.website,
-        location: result.location,
-        role: result.role,
-        isEmailVerified: result.isEmailVerified,
-        postsCount: result.postsCount,
-        followersCount: result.followersCount,
-        followingCount: result.followingCount,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-      };
 
       return {
         success: true,
         data: {
-          user: userProfile,
+          user: result,
           accessToken,
           refreshToken,
-          expiresIn: 15 * 60, // 15 minutes
+          expiresIn: ms(JWTUtils.ACCESS_TOKEN_EXPIRY) / 1000, // 15 minutes
         },
       };
     } catch (error) {
@@ -215,7 +201,7 @@ export class AuthService {
       const refreshToken = JWTUtils.generateRefreshToken(user.id, user.email);
 
       // Create user profile response
-      const userProfile: UserProfile = {
+      const userProfile: User = {
         id: user.id,
         email: user.email,
         username: user.username,
@@ -654,9 +640,7 @@ export class AuthService {
   /**
    * Get user profile by ID
    */
-  static async getUserProfile(
-    userId: string
-  ): Promise<ServiceResponse<UserProfile>> {
+  static async getUserProfile(userId: string): Promise<ServiceResponse<User>> {
     try {
       const user = await db.query.users.findFirst({
         where: eq(users.id, userId),
@@ -672,29 +656,9 @@ export class AuthService {
         };
       }
 
-      const userProfile: UserProfile = {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        displayUsername: user.displayUsername,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        bio: user.bio,
-        avatar: user.avatar,
-        website: user.website,
-        location: user.location,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-        postsCount: user.postsCount,
-        followersCount: user.followersCount,
-        followingCount: user.followingCount,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      };
-
       return {
         success: true,
-        data: userProfile,
+        data: user,
       };
     } catch (error) {
       console.error("Get user profile error:", error);

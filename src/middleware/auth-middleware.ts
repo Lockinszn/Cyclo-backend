@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from "express";
+import { type Request, Response, NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import { RateLimiterMemory } from "rate-limiter-flexible";
 import { JWTUtils } from "@/utils/jwt-utils";
-import { AuthenticatedRequest, UserRole } from "@/types/auth-types";
+import { UserRole } from "@/types/auth-types";
 
 // Extend Express Request type
 declare global {
@@ -12,6 +12,7 @@ declare global {
         userId: string;
         email: string;
         role: UserRole;
+        isEmailVerified: boolean;
       };
     }
   }
@@ -22,7 +23,7 @@ declare global {
  * Verifies JWT token and adds user info to request
  */
 export const authenticateToken = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -92,7 +93,7 @@ export const authenticateToken = async (
  * Adds user info to request if token is present and valid, but doesn't require it
  */
 export const optionalAuth = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -124,11 +125,7 @@ export const optionalAuth = async (
  * Requires specific roles to access the endpoint
  */
 export const requireRole = (roles: UserRole | UserRole[]) => {
-  return (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): void => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
         success: false,

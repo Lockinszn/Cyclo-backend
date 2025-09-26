@@ -9,7 +9,6 @@ import {
   ResetPasswordRequest,
   VerifyEmailRequest,
   RefreshTokenRequest,
-  AuthenticatedRequest,
 } from "@/types/auth-types";
 
 export class AuthController {
@@ -120,13 +119,10 @@ export class AuthController {
    * POST /api/v1/auth/logout
    * Logout user (blacklist token)
    */
-  static async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
+  static async logout(req: Request, res: Response): Promise<void> {
     try {
       const authHeader = req.headers.authorization;
-      const token =
-        authHeader && authHeader.startsWith("Bearer ")
-          ? authHeader.substring(7)
-          : null;
+      const token = JWTUtils.extractTokenFromHeader(authHeader || "");
 
       if (!token) {
         res.status(400).json({
@@ -415,7 +411,7 @@ export class AuthController {
    * GET /api/v1/auth/me
    * Get current user profile
    */
-  static async getMe(req: AuthenticatedRequest, res: Response): Promise<void> {
+  static async getMe(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
@@ -532,10 +528,7 @@ export class AuthController {
    * POST /api/v1/auth/change-password
    * Change user password (authenticated)
    */
-  static async changePassword(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
+  static async changePassword(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
