@@ -102,8 +102,8 @@ app.get("/health", async (req: Request, res: Response) => {
 // API routes
 app.use("/api/v1", apiRoutes);
 
-// 404 handler
-app.use("*", (req: Request, res: Response) => {
+// 404 handler (catch-all for unmatched routes)
+app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: "Not Found",
     message: `Route ${req.originalUrl} not found`,
